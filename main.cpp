@@ -4,23 +4,6 @@
 
 int main(void)
 {
-	/*
-	HANDLE hFile = CreateFileW(
-		L"C:\\Users\\somansa\\source\\repos\\ReflectiveDllInjectior\\Release\\DllExample.dll",
-		GENERIC_READ,
-		0,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL
-	);
-	if (!hFile)
-	{
-		printf("Cannot find the DLL\n");
-		return 1;
-	}
-	*/
-
 	// 내장된 DLL의 주소 저장
 	HRSRC hResInfo = FindResourceW(NULL, MAKEINTRESOURCEW(0x65), L"SHELLCODE");
 	HANDLE hResData = LoadResource(NULL, hResInfo);
@@ -49,19 +32,6 @@ int main(void)
 			pSectionHeader[i]->SizeOfRawData
 		);
 	}
-	/*
-	for (int i = 0; i < pNt->FileHeader.NumberOfSections; i++)
-	{
-		printf("%s\n", pSectionHeader[i]->Name);
-		printf(
-			"%02X %02X %02X %02X\n",
-			*(pMem + pSectionHeader[i]->VirtualAddress),
-			*(pMem + pSectionHeader[i]->VirtualAddress + 1),
-			*(pMem + pSectionHeader[i]->VirtualAddress + 2),
-			*(pMem + pSectionHeader[i]->VirtualAddress + 3)
-		);
-	}
-	*/
 
 	// DLL Relocation
 	if (pMem != (BYTE*)pNt->OptionalHeader.ImageBase)
@@ -75,15 +45,10 @@ int main(void)
 				BYTE* pRelocSection = pMem + pSectionHeader[i]->VirtualAddress;
 				DWORD offset = 0;
 
-				//printf("Original Base: 0x%X\n", pNt->OptionalHeader.ImageBase);
-				//printf("New Base: 0x%X\n", pMem);
-				//printf("Difference: 0x%X\n", (DWORD)pMem - pNt->OptionalHeader.ImageBase);
-				//printf("\n");
 				while (dwRelocSectionSize > offset)
 				{
 					IMAGE_BASE_RELOCATION* pRelocBlock = (IMAGE_BASE_RELOCATION*)(pRelocSection + offset);
 					BYTE* pRelocBase = pMem + pRelocBlock->VirtualAddress;
-					//printf("%X\n", pRelocBlock->VirtualAddress);
 					DWORD nTypeOffset = (pRelocBlock->SizeOfBlock - 0x8) / 2;
 					offset += 8;
 					for (int j = 0; j < nTypeOffset; j++)
@@ -92,12 +57,9 @@ int main(void)
 						if (wTypeOffset >> 12 == IMAGE_REL_BASED_HIGHLOW)
 						{
 							DWORD* ptr = (DWORD*)(pRelocBase + (wTypeOffset & 0xFFF));
-							//printf("0x%X: 0x%X -> ", ptr, *ptr);
 							*ptr = *ptr + dwBaseDifference;
-							//printf("0x%X (%X)\n", *ptr, *(WORD*)((BYTE*)pRelocSection + offset));
 						}
 						offset += 2;
-						//printf("%X/%X (%X %X)\n", offset, dwRelocSectionSize, pRelocBlock->SizeOfBlock, nTypeOffset);
 					}
 				}
 			}
